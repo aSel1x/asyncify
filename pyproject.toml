@@ -1,0 +1,29 @@
+[project]
+name = "asyncify"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "basedpyright>=1.35.0",
+]
+
+[project.optional-dependencies]
+monitoring = ["psutil>=5.9.0"]
+
+[tool.basedpyright]
+pythonVersion = "3.10"
+include = ["asyncify"]
+exclude = [
+    "**/node_modules",
+    "**/.venv",
+    "**/site-packages",
+    "**/__pycache__",
+]
+typeCheckingMode = "all"
+
+[dependency-groups]
+test = [
+    "pytest>=9.0.2",
+    "pytest-asyncio>=1.3.0",
+]
