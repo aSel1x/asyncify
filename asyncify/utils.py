@@ -1,5 +1,5 @@
 """Utility functions for asyncify.
 
-Currently empty - using _cpu_bound attribute for CPU detection.
+Currently empty - using cpu_bound parameter in run_sync.
 Future utilities can be added here.
 """

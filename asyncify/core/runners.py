@@ -93,13 +93,35 @@ async def run_sync(
     func: SyncFunc[R],
     *args: object,
     executor: Executor | None = None,
+    cpu_bound: bool | None = None,
     **kwargs: object,
 ) -> R:
     """
     Execute sync function in a thread or process pool without blocking event loop.
+
+    Args:
+        func: Sync function to execute
+        *args: Positional arguments
+        executor: Optional explicit executor (overrides cpu_bound detection)
+        cpu_bound: If True, uses ProcessPool; if False, uses ThreadPool;
+                   if None (default), auto-detects via _cpu_bound attribute
+        **kwargs: Keyword arguments
+
     Supports:
-      - THREAD_POOL for IO-bound
-      - BOOSTED_POOL for CPU-bound
+      - THREAD_POOL for IO-bound (default)
+      - BOOSTED_POOL for CPU-bound (when cpu_bound=True or func._cpu_bound=True)
+
+    Example:
+        ```python
+        # Auto-detect (attribute)
+        result = await run_sync(func)
+
+        # Explicit CPU-bound
+        result = await run_sync(bcrypt.hashpw, password, salt, cpu_bound=True)
+
+        # Explicit IO-bound
+        result = await run_sync(requests.get, url, cpu_bound=False)
+        ```
     """
     loop = asyncio.get_running_loop()
 
@@ -107,8 +129,12 @@ async def run_sync(
     if executor is not None:
         return await loop.run_in_executor(executor, partial(func, *args, **kwargs))
 
-    # auto choose
-    if getattr(func, "_cpu_bound", False):
+    # determine if CPU-bound
+    is_cpu_bound = (
+        cpu_bound if cpu_bound is not None else getattr(func, "_cpu_bound", False)
+    )
+
+    if is_cpu_bound:
         # Напрямую через ProcessPool для CPU-bound - избегаем лишнего ThreadPool
         fut = BOOSTED_POOL.submit_direct(func, *args, **kwargs)
         # Ждём результат в executor чтобы не блокировать event loop
