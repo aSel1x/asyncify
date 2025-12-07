@@ -1,12 +1,11 @@
 [project]
 name = "asyncify"
 version = "0.1.0"
-description = "Add your description here"
+description = "Type-safe async/sync bridge with adaptive thread/process pools"
+authors = [{name = "Your Name", email = "your@email.com"}]
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = [
-    "basedpyright>=1.35.0",
-]
+dependencies = []
 
 [project.optional-dependencies]
 monitoring = ["psutil>=5.9.0"]
@@ -22,8 +21,18 @@ exclude = [
 ]
 typeCheckingMode = "all"
 
+[tool.ruff]
+line-length = 88
+lint.select = ["E", "F", "W", "I"] # E=Error, F=Pyflakes, W=Warning, I=isort
+target-version = "py310"
+
 [dependency-groups]
 test = [
     "pytest>=9.0.2",
     "pytest-asyncio>=1.3.0",
+]
+dev = [
+    "ruff",
+    "pip-audit",
+    "basedpyright"
 ]

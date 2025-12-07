@@ -1,8 +1,8 @@
 from collections.abc import AsyncIterator, Callable, Coroutine, Iterable
 from typing import TypedDict, TypeVar
 
-T = TypeVar('T')
-R = TypeVar('R')
+T = TypeVar("T")
+R = TypeVar("R")
 
 
 # Function types

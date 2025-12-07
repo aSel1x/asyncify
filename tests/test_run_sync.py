@@ -4,6 +4,7 @@ import asyncio
 import time
 
 import pytest
+
 from asyncify import run_sync
 
 
@@ -15,7 +16,7 @@ def sync_add(x: int, y: int) -> int:
 def sync_io_task(delay: float = 0.05) -> str:
     """IO-bound sync task."""
     time.sleep(delay)
-    return 'done'
+    return "done"
 
 
 def sync_cpu_task(n: int) -> int:
@@ -25,7 +26,7 @@ def sync_cpu_task(n: int) -> int:
 
 def failing_task() -> None:
     """Task that always fails."""
-    raise RuntimeError('Task failed')
+    raise RuntimeError("Task failed")
 
 
 @pytest.mark.asyncio
@@ -46,7 +47,7 @@ async def test_run_sync_kwargs():
 async def test_run_sync_io_bound():
     """Test run_sync with IO-bound task."""
     result = await run_sync(sync_io_task, delay=0.02)
-    assert result == 'done'
+    assert result == "done"
 
 
 @pytest.mark.asyncio
@@ -68,7 +69,7 @@ async def test_run_sync_concurrent():
     results = await asyncio.gather(*tasks)
     elapsed = time.time() - start
 
-    assert all(r == 'done' for r in results)
+    assert all(r == "done" for r in results)
     # Should take ~0.05s with concurrency, not 0.25s
     assert elapsed < 0.15
 
@@ -76,5 +77,5 @@ async def test_run_sync_concurrent():
 @pytest.mark.asyncio
 async def test_run_sync_exception():
     """Test that exceptions are properly propagated."""
-    with pytest.raises(RuntimeError, match='Task failed'):
+    with pytest.raises(RuntimeError, match="Task failed"):
         await run_sync(failing_task)

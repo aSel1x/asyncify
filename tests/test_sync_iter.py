@@ -1,9 +1,9 @@
 """Tests for run_sync_iter function."""
 
-import asyncio
 from collections.abc import Generator
 
 import pytest
+
 from asyncify import run_sync_iter
 
 
@@ -15,7 +15,7 @@ def number_generator(n: int) -> Generator[int, None, None]:
 
 def string_generator() -> Generator[str, None, None]:
     """Generate some strings."""
-    for word in ['hello', 'world', 'test']:
+    for word in ["hello", "world", "test"]:
         yield word
 
 
@@ -49,7 +49,7 @@ async def test_run_sync_iter_strings():
     items: list[str] = []
     async for chunk in run_sync_iter(string_generator):
         items.extend(chunk)
-    assert items == ['hello', 'world', 'test']
+    assert items == ["hello", "world", "test"]
 
 
 @pytest.mark.asyncio

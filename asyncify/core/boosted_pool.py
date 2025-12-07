@@ -19,7 +19,7 @@ except ImportError:
 
 from asyncify.types import Initializer, InitializerArgs, SyncOrAsyncFunc, TaskResult
 
-SubmitResult = TypeVar('SubmitResult')
+SubmitResult = TypeVar("SubmitResult")
 
 
 @dataclass
@@ -36,18 +36,18 @@ class _TaskItem:
     """Internal task item for BoostedProcessPool."""
 
     __slots__ = (
-        'fn',
-        'args',
-        'kwargs',
-        'priority',
-        'sticky_id',
-        'channel',
-        'retries_left',
-        'backoff',
-        'attempt',
-        'on_success',
-        'on_error',
-        'user_future',
+        "fn",
+        "args",
+        "kwargs",
+        "priority",
+        "sticky_id",
+        "channel",
+        "retries_left",
+        "backoff",
+        "attempt",
+        "on_success",
+        "on_error",
+        "user_future",
     )
 
     def __init__(
@@ -57,7 +57,7 @@ class _TaskItem:
         kwargs: dict[str, object] | None = None,
         priority: int = 1,
         sticky_id: int | None = None,
-        channel: str = 'default',
+        channel: str = "default",
         retries: int = 0,
         backoff: float = 0.5,
         on_success: Callable[[object], None] | None = None,
@@ -68,7 +68,7 @@ class _TaskItem:
         self.kwargs: dict[str, object] = kwargs or {}
         self.priority: int = max(0, priority)
         self.sticky_id: int | None = sticky_id
-        self.channel: str = channel or 'default'
+        self.channel: str = channel or "default"
         self.retries_left: int = retries
         self.backoff: float = backoff
         self.attempt: int = 0
@@ -81,7 +81,7 @@ class _TaskItem:
 class _VirtualWorker:
     """Virtual worker для отслеживания нагрузки на воркеры пула."""
 
-    __slots__ = ('idx', 'load', '_lock')
+    __slots__ = ("idx", "load", "_lock")
 
     def __init__(self, idx: int) -> None:
         self.idx: int = idx
@@ -107,7 +107,7 @@ class FutureLike:
         Это может привести к deadlock. Используйте callbacks вместо этого.
     """
 
-    __slots__ = ('_done_event', '_result', '_exception')
+    __slots__ = ("_done_event", "_result", "_exception")
 
     def __init__(self) -> None:
         self._done_event: Event = threading.Event()
@@ -212,7 +212,7 @@ class BoostedProcessPool:
         ]
         self._channels: dict[str, tuple[queue.Queue[_TaskItem], ...]] = {}
         self._channels_lock: LockType = threading.Lock()
-        self._ensure_channel('default')
+        self._ensure_channel("default")
         self._task_available: Event = threading.Event()
 
         self._throttle_delay: float = 0.0
@@ -277,7 +277,7 @@ class BoostedProcessPool:
         *args: object,
         priority: int = 1,
         sticky_id: int | None = None,
-        channel: str = 'default',
+        channel: str = "default",
         retries: int = 0,
         backoff: float = 0.5,
         on_success: Callable[[object], None] | None = None,
@@ -358,9 +358,9 @@ class BoostedProcessPool:
     @staticmethod
     def _execute_task_wrapper(task: _TaskItem) -> TaskResult:
         try:
-            return {'ok': True, 'result': task.fn(*task.args, **task.kwargs)}
+            return {"ok": True, "result": task.fn(*task.args, **task.kwargs)}
         except Exception as e:
-            return {'ok': False, 'exc': e}
+            return {"ok": False, "exc": e}
 
     def _on_task_done(self, fut: concurrent.futures.Future[TaskResult]) -> None:
         with self._future_lock:
@@ -376,10 +376,10 @@ class BoostedProcessPool:
             exc: BaseException | None = e
             result_val: object | None = None
         else:
-            failed = not res.get('ok', False)
-            exc_val = res.get('exc', None)
+            failed = not res.get("ok", False)
+            exc_val = res.get("exc", None)
             exc = exc_val if isinstance(exc_val, BaseException) else None
-            result_val = res.get('result', None)
+            result_val = res.get("result", None)
 
         if failed and task.retries_left > 0:
             task.retries_left -= 1
@@ -398,7 +398,7 @@ class BoostedProcessPool:
                 task.user_future.set_exception(exc)
             elif failed:
                 task.user_future.set_exception(
-                    RuntimeError('Task failed without exception')
+                    RuntimeError("Task failed without exception")
                 )
             else:
                 task.user_future.set_result(
@@ -440,7 +440,7 @@ class BoostedProcessPool:
                 if u == 0.0:
                     u = psutil.cpu_percent(interval=0.1) / 100.0
                 return max(0.0, min(1.0, u))
-            elif hasattr(os, 'getloadavg'):
+            elif hasattr(os, "getloadavg"):
                 load1 = os.getloadavg()[0]
                 cpu = os.cpu_count() or 1
                 return max(0.0, min(1.0, load1 / cpu))
@@ -522,7 +522,8 @@ class BoostedProcessPool:
         Args:
             wait: Если True, ждёт завершения всех задач в очереди
             timeout: Максимальное время ожидания в секундах (только если wait=True)
-            cancel_pending: Если True, отменяет задачи в очереди (игнорируется если wait=True)
+            cancel_pending: Если True,
+            отменяет задачи в очереди (игнорируется если wait=True)
 
         Returns:
             True если все задачи завершились, False если timeout

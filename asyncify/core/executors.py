@@ -10,7 +10,7 @@ CPU_COUNT = multiprocessing.cpu_count()
 # Thread pool for IO-bound tasks
 # Adaptive size: min 32, max 4 * CPU_COUNT for high I/O concurrency
 THREAD_POOL = concurrent.futures.ThreadPoolExecutor(
-    max_workers=max(32, CPU_COUNT * 4), thread_name_prefix='asyncify-thread'
+    max_workers=max(32, CPU_COUNT * 4), thread_name_prefix="asyncify-thread"
 )
 
 # Use boosted deluxe pool for CPU-bound tasks

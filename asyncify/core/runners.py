@@ -46,7 +46,9 @@ async def run_sync_iter(
     """
     loop = asyncio.get_running_loop()
     max_queue_size = max_queue_size or chunk_size * 4
-    queue: Queue[T | _StopSentinel | BaseException] = asyncio.Queue(maxsize=max_queue_size)
+    queue: Queue[T | _StopSentinel | BaseException] = asyncio.Queue(
+        maxsize=max_queue_size
+    )
 
     def producer() -> None:
         """
@@ -106,7 +108,7 @@ async def run_sync(
         return await loop.run_in_executor(executor, partial(func, *args, **kwargs))
 
     # auto choose
-    if getattr(func, '_cpu_bound', False):
+    if getattr(func, "_cpu_bound", False):
         # Напрямую через ProcessPool для CPU-bound - избегаем лишнего ThreadPool
         fut = BOOSTED_POOL.submit_direct(func, *args, **kwargs)
         # Ждём результат в executor чтобы не блокировать event loop
@@ -169,11 +171,11 @@ def run_async(
     t.join(timeout=300)  # 5 минут timeout по умолчанию
 
     if t.is_alive():
-        raise TimeoutError('Async function execution timeout (300s)')
-    
+        raise TimeoutError("Async function execution timeout (300s)")
+
     if not result:
-        raise RuntimeError('No result from async function')
-    
+        raise RuntimeError("No result from async function")
+
     value = result[0]
     if isinstance(value, BaseException):
         raise value

@@ -25,7 +25,7 @@ def decorated_cpu_task(n: int) -> int:
 
 async def stress_cpu_async():
     """Stress test with many CPU tasks."""
-    print('\n=== CPU Stress Test ===')
+    print("\n=== CPU Stress Test ===")
     num_tasks = 100
     n = 10_000
 
@@ -40,16 +40,16 @@ async def stress_cpu_async():
     completed = sum(1 for r in results if not isinstance(r, Exception))
     failed = sum(1 for r in results if isinstance(r, Exception))
 
-    print(f'Tasks submitted: {num_tasks}')
-    print(f'Completed: {completed}')
-    print(f'Failed: {failed}')
-    print(f'Elapsed: {elapsed:.2f}s')
-    print(f'Throughput: {num_tasks / elapsed:.1f} tasks/sec')
+    print(f"Tasks submitted: {num_tasks}")
+    print(f"Completed: {completed}")
+    print(f"Failed: {failed}")
+    print(f"Elapsed: {elapsed:.2f}s")
+    print(f"Throughput: {num_tasks / elapsed:.1f} tasks/sec")
 
 
 async def stress_io_async():
     """Stress test with many IO tasks."""
-    print('\n=== IO Stress Test ===')
+    print("\n=== IO Stress Test ===")
     num_tasks = 200
     delay = 0.05
 
@@ -59,16 +59,16 @@ async def stress_io_async():
     results = await asyncio.gather(*tasks)
     elapsed = time.time() - start
 
-    print(f'Tasks: {num_tasks} x {delay}s delay')
-    print(f'Completed: {len(results)}')
-    print(f'Elapsed: {elapsed:.2f}s')
-    print(f'Throughput: {num_tasks / elapsed:.1f} tasks/sec')
-    print(f'Expected ~{delay}s with high concurrency')
+    print(f"Tasks: {num_tasks} x {delay}s delay")
+    print(f"Completed: {len(results)}")
+    print(f"Elapsed: {elapsed:.2f}s")
+    print(f"Throughput: {num_tasks / elapsed:.1f} tasks/sec")
+    print(f"Expected ~{delay}s with high concurrency")
 
 
 async def stress_async_mixed():
     """Stress test with mixed CPU and IO async tasks."""
-    print('\n=== Mixed Async Stress Test ===')
+    print("\n=== Mixed Async Stress Test ===")
 
     # Create a large mix of tasks
     tasks = []
@@ -84,16 +84,16 @@ async def stress_async_mixed():
     successful = sum(1 for r in results if not isinstance(r, Exception))
     failed = sum(1 for r in results if isinstance(r, Exception))
 
-    print(f'Total tasks: {len(tasks)}')
-    print(f'Successful: {successful}')
-    print(f'Failed: {failed}')
-    print(f'Elapsed: {elapsed:.2f}s')
-    print(f'Throughput: {len(tasks) / elapsed:.1f} tasks/sec')
+    print(f"Total tasks: {len(tasks)}")
+    print(f"Successful: {successful}")
+    print(f"Failed: {failed}")
+    print(f"Elapsed: {elapsed:.2f}s")
+    print(f"Throughput: {len(tasks) / elapsed:.1f} tasks/sec")
 
 
 async def stress_concurrent_decorator():
     """Stress test for @asyncify decorator with high concurrency."""
-    print('\n=== Decorator Concurrency Stress Test ===')
+    print("\n=== Decorator Concurrency Stress Test ===")
     num_tasks = 100
 
     tasks = [decorated_cpu_task(10_000) for _ in range(num_tasks)]
@@ -104,27 +104,27 @@ async def stress_concurrent_decorator():
 
     successful = sum(1 for r in results if not isinstance(r, Exception))
 
-    print(f'Tasks: {num_tasks}')
-    print(f'Successful: {successful}')
-    print(f'Elapsed: {elapsed:.2f}s')
-    print(f'Throughput: {num_tasks / elapsed:.1f} tasks/sec')
+    print(f"Tasks: {num_tasks}")
+    print(f"Successful: {successful}")
+    print(f"Elapsed: {elapsed:.2f}s")
+    print(f"Throughput: {num_tasks / elapsed:.1f} tasks/sec")
 
 
 async def main():
     """Run all stress tests."""
-    print('=' * 60)
-    print('  ASYNCIFY STRESS TESTS')
-    print('=' * 60)
+    print("=" * 60)
+    print("  ASYNCIFY STRESS TESTS")
+    print("=" * 60)
 
     await stress_cpu_async()
     await stress_io_async()
     await stress_async_mixed()
     await stress_concurrent_decorator()
 
-    print('\n' + '=' * 60)
-    print('  STRESS TESTS COMPLETED')
-    print('=' * 60)
+    print("\n" + "=" * 60)
+    print("  STRESS TESTS COMPLETED")
+    print("=" * 60)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     asyncio.run(main())

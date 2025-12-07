@@ -4,6 +4,7 @@ import asyncio
 import time
 
 import pytest
+
 from asyncify import asyncify, run_async, run_sync
 
 
@@ -16,7 +17,7 @@ def heavy_computation(n: int) -> int:
 def io_operation(delay: float) -> str:
     """IO-bound operation."""
     time.sleep(delay)
-    return f'completed_{delay}'
+    return f"completed_{delay}"
 
 
 async def async_computation(x: int, y: int) -> int:
@@ -29,7 +30,7 @@ async def async_computation(x: int, y: int) -> int:
 def decorated_io_task(delay: float) -> str:
     """IO-bound task with decorator."""
     time.sleep(delay)
-    return f'io_{delay}'
+    return f"io_{delay}"
 
 
 @pytest.mark.asyncio
@@ -56,7 +57,7 @@ async def test_io_bound_tasks_concurrent():
     results = await asyncio.gather(*tasks)
     elapsed = time.time() - start
 
-    assert all('completed_' in r for r in results)
+    assert all("completed_" in r for r in results)
     # Should be concurrent, not sequential
     assert elapsed < 0.5  # Much faster than 1.0s sequential
 
@@ -95,7 +96,7 @@ async def test_decorator_io_bound():
     results = await asyncio.gather(*tasks)
     elapsed = time.time() - start
 
-    assert all(r == 'io_0.05' for r in results)
+    assert all(r == "io_0.05" for r in results)
     assert elapsed < 0.2  # Concurrent execution
 
 
@@ -134,10 +135,10 @@ async def test_error_propagation_in_concurrent_tasks():
     """Test that errors in concurrent tasks are properly handled."""
 
     def failing_task():
-        raise ValueError('Task failed')
+        raise ValueError("Task failed")
 
     def successful_task():
-        return 'success'
+        return "success"
 
     tasks = [
         run_sync(successful_task),
@@ -147,9 +148,9 @@ async def test_error_propagation_in_concurrent_tasks():
 
     results = await asyncio.gather(*tasks, return_exceptions=True)
 
-    assert results[0] == 'success'
+    assert results[0] == "success"
     assert isinstance(results[1], ValueError)
-    assert results[2] == 'success'
+    assert results[2] == "success"
 
 
 @pytest.mark.asyncio

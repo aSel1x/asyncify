@@ -1,7 +1,6 @@
 """Tests for run_async function."""
 
 import asyncio
-import time
 
 from asyncify import run_async
 
@@ -21,8 +20,8 @@ async def async_with_error(fail: bool) -> str:
     """Async function that can fail."""
     await asyncio.sleep(0.01)
     if fail:
-        raise ValueError('Intentional error')
-    return 'success'
+        raise ValueError("Intentional error")
+    return "success"
 
 
 def test_run_async_basic():
@@ -51,12 +50,12 @@ def test_run_async_exception():
     """Test that exceptions are properly propagated."""
     try:
         run_async(async_with_error, fail=True)
-        assert False, 'Should have raised ValueError'
+        assert False, "Should have raised ValueError"
     except ValueError as e:
-        assert str(e) == 'Intentional error'
+        assert str(e) == "Intentional error"
 
 
 def test_run_async_success():
     """Test successful async execution."""
     result = run_async(async_with_error, fail=False)
-    assert result == 'success'
+    assert result == "success"
