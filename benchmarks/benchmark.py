@@ -36,11 +36,8 @@ async def benchmark_cpu_async():
     num_tasks = 10
     n = 100_000
 
-    # Mark as CPU-bound
-    cpu_task._cpu_bound = True
-
     start = time.time()
-    tasks = [run_sync(cpu_task, n) for _ in range(num_tasks)]
+    tasks = [run_sync(cpu_task, n, cpu_bound=True) for _ in range(num_tasks)]
     results = await asyncio.gather(*tasks)
     elapsed = time.time() - start
 
@@ -71,7 +68,6 @@ async def benchmark_async_mixed():
     """Benchmark mixed CPU + IO tasks in async context."""
     print("\n=== Mixed Async Benchmark ===")
 
-    # Mix of CPU and IO tasks
     tasks = [
         decorated_cpu_task(50_000),
         decorated_io_task(0.1),

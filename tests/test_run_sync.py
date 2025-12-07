@@ -53,10 +53,8 @@ async def test_run_sync_io_bound():
 @pytest.mark.asyncio
 async def test_run_sync_cpu_bound():
     """Test run_sync with CPU-bound task (marked with _cpu_bound)."""
-    # Mark function as CPU-bound
-    sync_cpu_task._cpu_bound = True  # type: ignore[attr-defined]
 
-    result = await run_sync(sync_cpu_task, 100)
+    result = await run_sync(sync_cpu_task, 100, cpu_bound=True)
     expected = sum(i * i for i in range(100))
     assert result == expected
 
@@ -70,7 +68,7 @@ async def test_run_sync_concurrent():
     elapsed = time.time() - start
 
     assert all(r == "done" for r in results)
-    # Should take ~0.05s with concurrency, not 0.25s
+
     assert elapsed < 0.15
 
 

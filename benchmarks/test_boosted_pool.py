@@ -24,8 +24,8 @@ def demo_callbacks():
     """Demonstrate callback usage."""
     print("\n=== Demo: Callbacks ===")
 
-    results = []
-    errors = []
+    results: list[object] = []
+    errors: list[str] = []
 
     def on_success(result: object) -> None:
         results.append(result)
@@ -40,7 +40,7 @@ def demo_callbacks():
     )
 
     _ = future.result(timeout=5.0)
-    time.sleep(0.1)  # Wait for callback
+    time.sleep(0.1)
     print(f"Total successful: {len(results)}")
 
 
@@ -48,10 +48,8 @@ def demo_priority_and_channels():
     """Demonstrate priority levels and channels."""
     print("\n=== Demo: Priority & Channels ===")
 
-    # Create custom channel
     BOOSTED_POOL.create_channel("high_priority")
 
-    # Submit with different priorities
     futures = [
         BOOSTED_POOL.submit(cpu_task, 500, priority=0, channel="default"),
         BOOSTED_POOL.submit(cpu_task, 500, priority=2, channel="high_priority"),
@@ -66,12 +64,11 @@ def demo_sticky_workers():
     """Demonstrate sticky worker assignment."""
     print("\n=== Demo: Sticky Workers ===")
 
-    # Tasks with same sticky_id go to same worker
     futures = [
         BOOSTED_POOL.submit(cpu_task, 500, sticky_id=0),
         BOOSTED_POOL.submit(cpu_task, 500, sticky_id=1),
-        BOOSTED_POOL.submit(cpu_task, 500, sticky_id=0),  # Same as first
-        BOOSTED_POOL.submit(cpu_task, 500, sticky_id=1),  # Same as second
+        BOOSTED_POOL.submit(cpu_task, 500, sticky_id=0),
+        BOOSTED_POOL.submit(cpu_task, 500, sticky_id=1),
     ]
 
     results = [f.result(timeout=5.0) for f in futures]

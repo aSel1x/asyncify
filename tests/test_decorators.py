@@ -30,9 +30,7 @@ async def test_asyncify_io_bound():
 @pytest.mark.asyncio
 async def test_asyncify_cpu_bound():
     """Test CPU-bound task via run_sync (decorator would fail pickle)."""
-    # Mark as CPU-bound and use run_sync directly
-    cpu_task_plain._cpu_bound = True  # type: ignore[attr-defined]
-    result = await run_sync(cpu_task_plain, 100)
+    result = await run_sync(cpu_task_plain, 100, cpu_bound=True)
     assert result == sum(i * i for i in range(100))
 
 
@@ -45,5 +43,5 @@ async def test_asyncify_concurrent():
     elapsed = time.time() - start
 
     assert results == [0, 2, 4, 6, 8]
-    # Should take ~0.05s with concurrency, not 0.25s
+
     assert elapsed < 0.15

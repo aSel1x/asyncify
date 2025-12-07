@@ -2,6 +2,7 @@
 
 import asyncio
 import time
+from collections.abc import Awaitable
 
 from asyncify import asyncify, run_sync
 
@@ -29,9 +30,7 @@ async def stress_cpu_async():
     num_tasks = 100
     n = 10_000
 
-    cpu_task._cpu_bound = True  # type: ignore[attr-defined]
-
-    tasks = [run_sync(cpu_task, n) for _ in range(num_tasks)]
+    tasks = [run_sync(cpu_task, n, cpu_bound=True) for _ in range(num_tasks)]
 
     start = time.time()
     results = await asyncio.gather(*tasks, return_exceptions=True)
@@ -70,15 +69,14 @@ async def stress_async_mixed():
     """Stress test with mixed CPU and IO async tasks."""
     print("\n=== Mixed Async Stress Test ===")
 
-    # Create a large mix of tasks
-    tasks = []
-    for i in range(50):
+    tasks: list[Awaitable[int | float]] = []
+    for _ in range(50):
         tasks.append(decorated_cpu_task(5_000))
-    for i in range(50):
+    for _ in range(50):
         tasks.append(run_sync(io_task, 0.03))
 
     start = time.time()
-    results = await asyncio.gather(*tasks, return_exceptions=True)
+    results: list[object] = await asyncio.gather(*tasks, return_exceptions=True)
     elapsed = time.time() - start
 
     successful = sum(1 for r in results if not isinstance(r, Exception))

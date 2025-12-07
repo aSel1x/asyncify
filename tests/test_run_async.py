@@ -49,7 +49,7 @@ def test_run_async_no_args():
 def test_run_async_exception():
     """Test that exceptions are properly propagated."""
     try:
-        run_async(async_with_error, fail=True)
+        _ = run_async(async_with_error, fail=True)
         assert False, "Should have raised ValueError"
     except ValueError as e:
         assert str(e) == "Intentional error"

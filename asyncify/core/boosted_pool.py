@@ -13,7 +13,7 @@ from threading import Event, Thread
 from typing import Callable, TypeVar, final
 
 try:
-    import psutil
+    import psutil  # pyright: ignore[reportMissingModuleSource]
 except ImportError:
     psutil = None
 
@@ -28,7 +28,7 @@ class PoolStats:
     queue_lengths: dict[str, list[int]]
     worker_loads: list[int]
     cpu_util: float | None = None
-    throttle_delay: float = 0.0  # Текущая задержка для throttling
+    throttle_delay: float = 0.0
 
 
 @final
@@ -79,7 +79,7 @@ class _TaskItem:
 
 @final
 class _VirtualWorker:
-    """Virtual worker для отслеживания нагрузки на воркеры пула."""
+    """Virtual worker for tracking pool worker load."""
 
     __slots__ = ("idx", "load", "_lock")
 
@@ -99,13 +99,7 @@ class _VirtualWorker:
 
 @final
 class FutureLike:
-    """
-    Обёртка для user-facing future-like объекта.
-
-    Warning:
-        Не вызывайте result() из того же потока, что и executor!
-        Это может привести к deadlock. Используйте callbacks вместо этого.
-    """
+    """Future-like wrapper for task results."""
 
     __slots__ = ("_done_event", "_result", "_exception")
 
@@ -123,19 +117,7 @@ class FutureLike:
         self._done_event.set()
 
     def result(self, timeout: float | None = None) -> object:
-        """
-        Ждёт завершения задачи и возвращает результат.
-
-        Args:
-            timeout: Максимальное время ожидания в секундах
-
-        Returns:
-            Результат выполнения задачи
-
-        Raises:
-            TimeoutError: Если задача не завершилась за timeout
-            BaseException: Исключение из задачи, если она упала
-        """
+        """Wait for task completion and return result."""
         if not self._done_event.wait(timeout):
             raise TimeoutError()
         if self._exception:
@@ -147,37 +129,7 @@ class FutureLike:
 
 
 class BoostedProcessPool:
-    """
-    Продвинутый process pool с поддержкой:
-    - Priority queues (приоритизация задач)
-    - Sticky workers (привязка задач к конкретным workers)
-    - Channels (группировка задач по каналам)
-    - Retry механизм с exponential backoff
-    - CPU monitoring и адаптивная загрузка
-    - Callbacks для обработки результатов/ошибок
-
-    Example:
-        ```python
-        pool = BoostedProcessPool(
-            max_workers=4,
-            warmup=True,
-            sticky=True,
-            priority_levels=3
-        )
-
-        # Submit с приоритетом и callbacks
-        future = pool.submit(
-            heavy_task,
-            data,
-            priority=2,
-            on_success=lambda r: print(f"Done: {r}"),
-            on_error=lambda e: print(f"Error: {e}")
-        )
-
-        result = future.result(timeout=10.0)
-        pool.shutdown(wait=True)
-        ```
-    """
+    """Advanced process pool with priorities, sticky workers, channels, and retries."""
 
     def __init__(
         self,
@@ -251,26 +203,22 @@ class BoostedProcessPool:
     def submit_direct(
         self, func: Callable[..., SubmitResult], *args: object, **kwargs: object
     ) -> concurrent.futures.Future[SubmitResult]:
-        """
-        Прямой доступ к underlying ProcessPoolExecutor для low-level операций.
-        Используется в run_sync для CPU-bound задач.
-        """
+        """Direct access to underlying ProcessPoolExecutor."""
         fut: concurrent.futures.Future[SubmitResult] = self._pool.submit(
             func, *args, **kwargs
         )
         return fut
 
     def _warmup(self) -> None:
-        """Warmup: запускаем простые задачи чтобы поднять все процессы."""
+        """Warmup pool by running simple tasks."""
         futures = [self._pool.submit(lambda: 1) for _ in range(self.max_workers)]
         for f in futures:
             try:
                 _ = f.result(timeout=1)
             except Exception:
-                pass  # Игнорируем ошибки warmup
-        time.sleep(0.03)  # Небольшая задержка для стабилизации
+                pass
+        time.sleep(0.03)
 
-    # Submit with callback & future
     def submit(
         self,
         fn: SyncOrAsyncFunc,
@@ -283,22 +231,7 @@ class BoostedProcessPool:
         on_success: Callable[[object], None] | None = None,
         on_error: Callable[[BaseException], None] | None = None,
     ) -> FutureLike:
-        """
-        Enqueue task, optionally attach callbacks for success/error.
-
-        Args:
-            fn: Функция для выполнения
-            priority: Приоритет задачи (0 = lowest)
-            sticky_id: ID для привязки к конкретному worker
-            channel: Канал для группировки задач
-            retries: Количество повторов при ошибке
-            backoff: Базовая задержка для exponential backoff
-            on_success: Callback для успешного выполнения
-            on_error: Callback для обработки ошибок
-
-        Returns:
-            FutureLike объект для ожидания результата
-        """
+        """Enqueue task with optional callbacks."""
         self._ensure_channel(channel)
         task = _TaskItem(
             fn,
@@ -315,10 +248,9 @@ class BoostedProcessPool:
         task.user_future = future_like
         q = self._channels[channel][min(priority, self.priority_levels - 1)]
         q.put(task)
-        _ = self._task_available.set()  # Сигнализируем dispatcher
+        _ = self._task_available.set()
         return future_like
 
-    # Dispatcher loop
     def _dispatcher_loop(self) -> None:
         while self._running:
             _ = self._task_available.wait(timeout=0.1)
@@ -392,7 +324,7 @@ class BoostedProcessPool:
             )
             threading.Timer(delay_time, lambda: self._requeue(task)).start()
             return
-        # set future
+
         if task.user_future is not None:
             if failed and exc is not None:
                 task.user_future.set_exception(exc)
@@ -405,35 +337,24 @@ class BoostedProcessPool:
                     result_val if result_val is not None else None
                 )
 
-        # call appropriate callback
         if not failed and task.on_success is not None:
             try:
                 task.on_success(result_val)
             except Exception:
-                pass  # Игнорируем ошибки в callback
+                pass
         elif failed and exc is not None and task.on_error is not None:
             try:
                 task.on_error(exc)
             except Exception:
-                pass  # Игнорируем ошибки в callback
+                pass
 
     def _requeue(self, task: _TaskItem) -> None:
         q = self._channels[task.channel][min(task.priority, self.priority_levels - 1)]
         q.put(task)
-        _ = self._task_available.set()  # Сигнализируем dispatcher
+        _ = self._task_available.set()
 
-    # ----------------------
-    # Monitoring & stats
-    # ----------------------
     def _measure_cpu_util(self) -> float | None:
-        """
-        Измеряет использование CPU.
-
-        Использует:
-        1. psutil.cpu_percent() если доступен (pip install asyncify[monitoring])
-        2. os.getloadavg() на Unix-системах как fallback
-        3. None если ни один метод не доступен
-        """
+        """Measure CPU utilization (psutil or os.getloadavg)."""
         try:
             if psutil is not None:
                 u = psutil.cpu_percent(interval=None) / 100.0
@@ -449,9 +370,9 @@ class BoostedProcessPool:
             return None
 
     def _monitor_loop(self) -> None:
-        """Мониторинг CPU и adaptive scaling."""
+        """CPU monitoring and adaptive throttling."""
         cpu_history: list[float] = []
-        max_history = 10  # Последние 10 измерений для сглаживания
+        max_history = 10
 
         while self._running and self.adaptive:
             time.sleep(1.0)
@@ -460,28 +381,21 @@ class BoostedProcessPool:
             if cpu_util is None:
                 continue
 
-            # Собираем историю для сглаживания скачков
             cpu_history.append(cpu_util)
             if len(cpu_history) > max_history:
                 _ = cpu_history.pop(0)
 
-            # Средняя загрузка за последние измерения
             avg_cpu = sum(cpu_history) / len(cpu_history)
 
-            # Adaptive throttling на основе средней загрузки
             if len(cpu_history) >= 5:
                 with self._throttle_lock:
                     if avg_cpu > 0.9:
-                        # CPU перегружен - увеличиваем задержку между задачами
                         self._throttle_delay = min(0.1, self._throttle_delay + 0.01)
                     elif avg_cpu > 0.75:
-                        # CPU загружен умеренно - небольшая задержка
                         self._throttle_delay = min(0.05, self._throttle_delay + 0.005)
                     elif avg_cpu < 0.5:
-                        # CPU недогружен - убираем задержку
                         self._throttle_delay = max(0.0, self._throttle_delay - 0.01)
                     elif avg_cpu < 0.7:
-                        # CPU нормально - плавно снижаем задержку
                         self._throttle_delay = max(0.0, self._throttle_delay - 0.005)
 
     def stats(self) -> PoolStats:
@@ -502,12 +416,12 @@ class BoostedProcessPool:
         )
 
     def _all_queues_empty(self) -> bool:
-        """Проверяет, что все очереди пусты."""
+        """Check if all queues are empty."""
         with self._channels_lock:
             return all(q.empty() for queues in self._channels.values() for q in queues)
 
     def _all_workers_idle(self) -> bool:
-        """Проверяет, что все workers idle (нет активных задач)."""
+        """Check if all workers are idle."""
         return all(w.load == 0 for w in self.virtual_workers)
 
     def shutdown(
@@ -516,34 +430,14 @@ class BoostedProcessPool:
         timeout: float | None = None,
         cancel_pending: bool = False,
     ) -> bool:
-        """
-        Останавливает pool и освобождает ресурсы.
-
-        Args:
-            wait: Если True, ждёт завершения всех задач в очереди
-            timeout: Максимальное время ожидания в секундах (только если wait=True)
-            cancel_pending: Если True,
-            отменяет задачи в очереди (игнорируется если wait=True)
-
-        Returns:
-            True если все задачи завершились, False если timeout
-
-        Example:
-            # Graceful shutdown - ждёт все задачи
-            pool.shutdown(wait=True, timeout=10.0)
-
-            # Fast shutdown - отменяет pending задачи
-            pool.shutdown(wait=False, cancel_pending=True)
-        """
+        """Shutdown pool and release resources."""
         if wait:
-            # Graceful shutdown: ждём пока очереди опустеют и workers станут idle
             start_time = time.time()
             while not (self._all_queues_empty() and self._all_workers_idle()):
                 if timeout is not None and (time.time() - start_time) >= timeout:
-                    break  # Timeout - переходим к forced shutdown
+                    break
                 time.sleep(0.05)
 
-        # Останавливаем dispatcher и monitor
         self._running = False
         try:
             self._dispatcher.join(timeout=0.5)
@@ -551,11 +445,9 @@ class BoostedProcessPool:
         except Exception:
             pass
 
-        # Закрываем underlying pool
         try:
             self._pool.shutdown(cancel_futures=cancel_pending, wait=wait)
         except Exception:
-            pass  # Игнорируем ошибки shutdown - pool может быть уже закрыт
+            pass
 
-        # Проверяем успешность завершения
         return self._all_queues_empty() and self._all_workers_idle()

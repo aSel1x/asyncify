@@ -8,7 +8,6 @@ import pytest
 from asyncify import asyncify, run_async, run_sync
 
 
-# Test functions - must be at module level for pickling
 def heavy_computation(n: int) -> int:
     """CPU-intensive task."""
     return sum(i * i for i in range(n))
@@ -44,8 +43,8 @@ async def test_cpu_bound_tasks_concurrent():
 
     expected = sum(i * i for i in range(10000))
     assert all(r == expected for r in results)
-    # Should be faster than sequential
-    assert elapsed < 5.0  # Very conservative
+
+    assert elapsed < 5.0
 
 
 @pytest.mark.asyncio
@@ -58,8 +57,8 @@ async def test_io_bound_tasks_concurrent():
     elapsed = time.time() - start
 
     assert all("completed_" in r for r in results)
-    # Should be concurrent, not sequential
-    assert elapsed < 0.5  # Much faster than 1.0s sequential
+
+    assert elapsed < 0.5
 
 
 @pytest.mark.asyncio
@@ -79,8 +78,7 @@ async def test_mixed_workload():
 @pytest.mark.asyncio
 async def test_decorator_cpu_bound():
     """Test CPU-bound tasks via run_sync (decorator would fail pickle)."""
-    heavy_computation._cpu_bound = True  # type: ignore[attr-defined]
-    tasks = [run_sync(heavy_computation, 10000) for _ in range(3)]
+    tasks = [run_sync(heavy_computation, 10000, cpu_bound=True) for _ in range(3)]
 
     results = await asyncio.gather(*tasks)
     expected = sum(i * i for i in range(10000))
@@ -97,7 +95,7 @@ async def test_decorator_io_bound():
     elapsed = time.time() - start
 
     assert all(r == "io_0.05" for r in results)
-    assert elapsed < 0.2  # Concurrent execution
+    assert elapsed < 0.2
 
 
 def test_run_async_from_sync():
@@ -108,7 +106,7 @@ def test_run_async_from_sync():
 
 def test_run_async_multiple_calls():
     """Test multiple run_async calls in sequence."""
-    results = []
+    results: list[int] = []
     for i in range(5):
         result = run_async(async_computation, i, i + 1)
         results.append(result)
@@ -120,9 +118,7 @@ def test_run_async_multiple_calls():
 async def test_nested_async_sync():
     """Test nesting async and sync operations."""
 
-    # Async calls sync which calls async
     async def outer():
-        # This is async context
         result = await run_sync(lambda: run_async(async_computation, 5, 10))
         return result
 
@@ -156,7 +152,7 @@ async def test_error_propagation_in_concurrent_tasks():
 @pytest.mark.asyncio
 async def test_high_concurrency():
     """Test high concurrency scenario."""
-    # Many small IO tasks
+
     tasks = [run_sync(io_operation, 0.01) for _ in range(50)]
 
     start = time.time()
@@ -164,7 +160,7 @@ async def test_high_concurrency():
     elapsed = time.time() - start
 
     assert len(results) == 50
-    # Should be much faster than sequential (0.5s)
+
     assert elapsed < 0.3
 
 
@@ -183,9 +179,7 @@ async def test_decorator_with_kwargs():
 def test_sync_to_async_to_sync():
     """Test calling pattern: sync -> async -> sync."""
 
-    # Start from sync code
     def sync_wrapper():
-        # Call async via run_async
         return run_async(async_computation, 100, 200)
 
     result = sync_wrapper()

@@ -35,7 +35,6 @@ async def test_run_sync_iter_with_chunks():
     async for chunk in run_sync_iter(number_generator, 10, chunk_size=3):
         chunks.append(chunk)
 
-    # Should have chunks of size 3, 3, 3, 1
     assert len(chunks) == 4
     assert chunks[0] == [0, 1, 2]
     assert chunks[1] == [3, 4, 5]
@@ -57,8 +56,7 @@ async def test_run_sync_iter_empty():
     """Test with empty generator."""
 
     def empty_gen() -> Generator[int, None, None]:
-        return
-        yield  # Make it a generator
+        yield from ()
 
     items: list[int] = []
     async for chunk in run_sync_iter(empty_gen):
